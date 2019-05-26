@@ -1,5 +1,5 @@
 all:
-	gcc -g -o uart main.c
+	gcc -pthread -g -o uart main.c
 clean:
 	rm -f uart
 

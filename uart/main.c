@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define SIM7600_TRANSPARENT_MODE    "AT+CIPMODE=1\r\n"
 #define SIM7600_OPEN_NETWORK        "AT+NETOPEN\r\n"
@@ -23,8 +24,8 @@
  */
 int uart_set(int fd, int baudrate, int bits, char check, int stopbit)
 {
-    struct termios newtio, oldtio;
     speed_t speed;
+    struct termios newtio, oldtio;
 
     if(tcgetattr(fd, &oldtio) != 0)
     {
@@ -129,10 +130,31 @@ int uart_set(int fd, int baudrate, int bits, char check, int stopbit)
     return 0;
 }
 
+int fd;
+
+static void *uart_recv(void *p)
+{
+    char buf[4];
+    int len;
+    unsigned int i = 0;
+
+    while(1)
+    {
+        memset(buf, 0, sizeof(buf));
+       if((len = read(fd, buf, sizeof(buf))) > 0)
+       {
+           printf("[%d] got: %s\n", i++, buf);
+       }
+    }
+
+    pthread_exit(NULL);
+}
+
 int main(int argc, char** argv)
 {
-    int fd;
+    /// int fd;
     char uart[100] = {0};
+    pthread_t thd;
 
     if(argc != 2)
     {
@@ -154,14 +176,24 @@ int main(int argc, char** argv)
         return -3;
     }
 
-    write(fd, SIM7600_TRANSPARENT_MODE, strlen(SIM7600_TRANSPARENT_MODE));
-    sleep(1);
+    /////////////////////////
+    pthread_create(&thd, NULL, uart_recv, NULL);
+    /////////////////////////
 
-    write(fd, SIM7600_OPEN_NETWORK, strlen(SIM7600_OPEN_NETWORK));
-    sleep(1);
+    /// write(fd, SIM7600_TRANSPARENT_MODE, strlen(SIM7600_TRANSPARENT_MODE));
+    /// sleep(1);
 
-    write(fd, SIM7600_CONNECT_TO_SERVER, strlen(SIM7600_CONNECT_TO_SERVER));
+    /// write(fd, SIM7600_OPEN_NETWORK, strlen(SIM7600_OPEN_NETWORK));
+    /// sleep(1);
 
-    close(fd);
+    /// write(fd, SIM7600_CONNECT_TO_SERVER, strlen(SIM7600_CONNECT_TO_SERVER));
+
+    while(1)
+    {
+        write(fd, SIM7600_TRANSPARENT_MODE, strlen(SIM7600_TRANSPARENT_MODE));
+        sleep(3);
+    }
+    /// sleep(10000);
+    /// close(fd);
     return 0;
 }
