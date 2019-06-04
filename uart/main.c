@@ -166,14 +166,15 @@ int uart_set(int fd, int baudrate, int bits, char check, int stopbit) {
 int fd;
 
 static void *uart_recv(void *p) {
-    char         buf[40];
-    int          len;
-    unsigned int i = 0;
+    char buf[100];
+    char c;
 
     while (1) {
-        memset(buf, 0, sizeof(buf));
-        if ((len = read(fd, buf, sizeof(buf))) > 0) {
-            printf("[%d] got: %s\n", i++, buf);
+        if (read(fd, &c, 1)) {
+            usleep(500 * 1000);
+            memset(buf, 0, sizeof(buf));
+            read(fd, buf, sizeof(buf));
+            printf("got: %c%s\n", c, buf);
         }
     }
 
@@ -183,6 +184,7 @@ static void *uart_recv(void *p) {
 int main(int argc, char **argv) {
     char      uart[100] = {0};
     pthread_t thd;
+    int       last = 20;
 
     if (argc != 2) {
         printf("usage: ./a.out /dev/ttyS*\n");
@@ -211,7 +213,11 @@ int main(int argc, char **argv) {
 
     write(fd, SIM7600_CONNECT_TO_SERVER, strlen(SIM7600_CONNECT_TO_SERVER));
 
-    sleep(1);
+    while (last--) {
+        sleep(1);
+    }
+
+    printf("main return\n");
     close(fd);
     return 0;
 }
