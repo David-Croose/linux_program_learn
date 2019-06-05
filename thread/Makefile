@@ -1,5 +1,9 @@
-all:
-	gcc -g -o test main.c
+normal:
+	gcc -pthread -g -o normal normal.c
+
+join:
+	gcc -pthread -g -o join join.c
+
 clean:
-	rm -f test
+	rm -f normal join
 
